@@ -1,28 +1,10 @@
 {
   "expo": {
-    "name": "Mohamed App",
+    "name": "Mohamed-app",
     "slug": "Mohamed-app",
     "version": "1.0.0",
-    "orientation": "portrait",
-    "icon": "./icon.png",
-    "userInterfaceStyle": "light",
-    "splash": {
-      "image": "./splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
-    },
-    "ios": {
-      "supportsTablet": true
-    },
     "android": {
-      "adaptiveIcon": {
-        "foregroundImage": "./adaptive-icon.png",
-        "backgroundColor": "#ffffff"
-      },
       "package": "com.mohamed.myfirstapp"
-    },
-    "web": {
-      "favicon": "./favicon.png"
     }
   }
 }
