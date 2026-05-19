@@ -4,11 +4,6 @@
       "android": {
         "buildType": "app-bundle"
       }
-    },
-    "internal": {
-      "android": {
-        "buildType": "apk"
-      }
     }
   }
 }
