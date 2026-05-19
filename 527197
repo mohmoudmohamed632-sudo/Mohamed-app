@@ -1,0 +1,281 @@
+import { Feather } from "@expo/vector-icons";
+import React, { createContext, useContext, useState } from "react";
+import { 
+  FlatList, 
+  Image, 
+  Pressable, 
+  StyleSheet, 
+  Text, 
+  View 
+} from "react-native";
+
+// Types
+export type Category = "الكل" | "مشويات" | "مقبلات" | "حلويات";
+
+export type MenuItem = {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  image: any;
+  category: Category;
+  icon: keyof typeof Feather.glyphMap;
+};
+
+type CartItem = { item: MenuItem; quantity: number };
+
+// Data
+const menuItems: MenuItem[] = [
+  {
+    id: "1",
+    name: "كباب",
+    description: "كباب مشوي على الفحم",
+    price: 120,
+    image: { uri: "https://images.unsplash.com/photo-1529193591184-b99245e9a5a5?w=400" },
+    category: "مشويات",
+    icon: "coffee",
+  },
+  {
+    id: "2",
+    name: "كفتة",
+    description: "كفتة بلدي مشوية",
+    price: 100,
+    image: { uri: "https://images.unsplash.com/photo-1585937421612-70a008356c36?w=400" },
+    category: "مشويات",
+    icon: "shopping-bag",
+  },
+  {
+    id: "3",
+    name: "حمص",
+    description: "حمص بالطحينة وزيت الزيتون",
+    price: 35,
+    image: { uri: "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=400" },
+    category: "مقبلات",
+    icon: "coffee",
+  },
+];
+
+const categories: Category[] = ["الكل", "مشويات", "مقبلات", "حلويات"];
+
+// Colors Hook
+const useColors = () => ({
+  card: "#fff",
+  border: "#eee",
+  foreground: "#000",
+  mutedForeground: "#666",
+  primary: "#C87A0A",
+  primaryForeground: "#fff",
+  secondary: "#f0f0f0",
+});
+
+// Cart Context
+const CartContext = createContext<any>(null);
+
+const CartProvider = ({ children }: { children: React.ReactNode }) => {
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+
+  const addToCart = (item: MenuItem) => {
+    setCartItems((prev) => {
+      const existing = prev.find((ci) => ci.item.id === item.id);
+      if (existing) {
+        return prev.map((ci) =>
+          ci.item.id === item.id ? { ...ci, quantity: ci.quantity + 1 } : ci
+        );
+      }
+      return [...prev, { item, quantity: 1 }];
+    });
+  };
+
+  return (
+    <CartContext.Provider value={{ cartItems, addToCart }}>
+      {children}
+    </CartContext.Provider>
+  );
+};
+
+const useCart = () => useContext(CartContext);
+
+// Components
+function CategoryPill({ label, selected, onPress }: { label: Category; selected: boolean; onPress: () => void }) {
+  const colors = useColors();
+  return (
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.pill,
+        {
+          backgroundColor: selected ? colors.primary : colors.secondary,
+          borderColor: selected ? colors.primary : colors.border,
+          opacity: pressed ? 0.85 : 1,
+        },
+      ]}
+    >
+      <Text
+        style={[
+          styles.label,
+          { color: selected ? colors.primaryForeground : colors.foreground },
+        ]}
+      >
+        {label}
+      </Text>
+    </Pressable>
+  );
+}
+
+function MenuItemCard({ item }: { item: MenuItem }) {
+  const colors = useColors();
+  const { addToCart, cartItems } = useCart();
+  const qty = cartItems.find((ci: CartItem) => ci.item.id === item.id)?.quantity ?? 0;
+
+  const handleAdd = () => {
+    addToCart(item);
+  };
+
+  return (
+    <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+      <Image source={item.image} style={styles.image} resizeMode="cover" />
+      <View style={styles.body}>
+        <Text style={[styles.name, { color: colors.foreground }]} numberOfLines={1}>
+          {item.name}
+        </Text>
+        <Text style={[styles.desc, { color: colors.mutedForeground }]} numberOfLines={2}>
+          {item.description}
+        </Text>
+        <View style={styles.footer}>
+          <Pressable
+            onPress={handleAdd}
+            style={({ pressed }) => [
+              styles.addBtn,
+              { backgroundColor: colors.primary, opacity: pressed ? 0.8 : 1 },
+            ]}
+          >
+            <Feather name="plus" size={18} color="#fff" />
+            {qty > 0 && <Text style={styles.qtyBadge}>{qty}</Text>}
+          </Pressable>
+          <Text style={[styles.price, { color: colors.primary }]}>
+            {item.price} ج.م
+          </Text>
+        </View>
+      </View>
+    </View>
+  );
+}
+
+// Main App
+export default function App() {
+  const [selected, setSelected] = useState<Category>("الكل");
+  const filtered = selected === "الكل" ? menuItems : menuItems.filter((i) => i.category === selected);
+
+  return (
+    <CartProvider>
+      <View style={styles.container}>
+        <FlatList
+          data={categories}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          keyExtractor={(item) => item}
+          renderItem={({ item }) => (
+            <CategoryPill
+              label={item}
+              selected={selected === item}
+              onPress={() => setSelected(item)}
+            />
+          )}
+          contentContainerStyle={styles.categories}
+        />
+
+        <FlatList
+          data={filtered}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => <MenuItemCard item={item} />}
+          contentContainerStyle={styles.list}
+        />
+      </View>
+    </CartProvider>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#fff",
+    paddingTop: 50,
+    paddingHorizontal: 16,
+  },
+  categories: {
+    paddingVertical: 16,
+  },
+  list: {
+    paddingBottom: 20,
+  },
+  pill: {
+    paddingHorizontal: 18,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    marginLeft: 8,
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: "600",
+    textAlign: "center",
+  },
+  card: {
+    borderRadius: 16,
+    overflow: "hidden",
+    borderWidth: 1,
+    marginBottom: 16,
+  },
+  image: {
+    width: "100%",
+    height: 150,
+  },
+  body: {
+    padding: 10,
+    gap: 4,
+  },
+  name: {
+    fontSize: 14,
+    fontWeight: "700",
+    textAlign: "right",
+  },
+  desc: {
+    fontSize: 11,
+    fontWeight: "400",
+    lineHeight: 16,
+    textAlign: "right",
+  },
+  footer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginTop: 8,
+  },
+  price: {
+    fontSize: 15,
+    fontWeight: "700",
+    textAlign: "right",
+  },
+  addBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  qtyBadge: {
+    position: "absolute",
+    top: -4,
+    left: -4,
+    backgroundColor: "#C87A0A",
+    color: "#fff",
+    fontSize: 10,
+    fontWeight: "700",
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    textAlign: "center",
+    lineHeight: 16,
+    overflow: "hidden",
+  },
+});
