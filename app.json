@@ -3,6 +3,7 @@
     "name": "Mohamed-app",
     "slug": "Mohamed-app",
     "version": "1.0.0",
+    "scheme": "mohamed-app",
     "android": {
       "package": "com.mohamed.myfirstapp"
     }
